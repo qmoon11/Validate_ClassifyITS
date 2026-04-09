@@ -1,0 +1,71 @@
+########################################################
+SINTAX Assignments
+########################################################
+
+#reformat the UNITE eukaryote database to be SINTAX compatable
+
+in="/scratch/tyjames_root/tyjames0/qmoon/AgeDiversityDistance/MoonITS2/UNITE/euk/sh_general_release_dynamic_s_all_19.02.2025.fasta"
+out="/scratch/tyjames_root/tyjames0/qmoon/AgeDiversityDistance/MoonITS2/UNITE/euk/sh_general_release_dynamic_s_all_19.02.2025_sintax_clean.fasta"
+
+awk '
+BEGIN{FS="|"}
+/^>/{
+  full=$0
+  sub(/^>/,"",full)
+  n=split(full, a, "|")
+
+  id=a[1] "|" a[2] "|" a[3]
+
+  # The taxonomy/lineage is in the LAST pipe field, but that field can itself
+  # contain an extra "|reps_*|" segment. Keep only text after the LAST "|".
+  lineage=a[n]
+  sub(/.*\|/, "", lineage)
+
+  # convert UNITE prefixes
+  gsub(/k__/, "k:", lineage)
+  gsub(/p__/, "p:", lineage)
+  gsub(/c__/, "c:", lineage)
+  gsub(/o__/, "o:", lineage)
+  gsub(/f__/, "f:", lineage)
+  gsub(/g__/, "g:", lineage)
+  gsub(/s__/, "s:", lineage)
+
+  # SINTAX expects comma-separated rank items
+  gsub(/;/, ",", lineage)
+
+  print ">" id ";tax=" lineage ";"
+  next
+}
+{print}
+' "$in" > "$out"
+
+########################################################
+run with 0.7, 0.8, and 0.9 cutoff
+########################################################
+conda activate its-classify 
+
+REP="dna-sequences_ITS_Antrim.fasta"  
+DB="/scratch/tyjames_root/tyjames0/qmoon/AgeDiversityDistance/MoonITS2/UNITE/euk/sh_general_release_dynamic_s_all_19.02.2025_sintax_clean.fasta"
+THREADS=8
+
+for c in 0.7 0.8 0.9; do
+  vsearch --sintax "$REP" \
+          --db "$DB" \
+          --tabbedout "sintax_cutoff_${c}.tsv" \
+          --sintax_cutoff "$c" \
+          --strand both \
+          --threads "$THREADS" \
+          --log "sintax_cutoff_${c}.log"
+done
+
+
+
+
+
+
+
+
+
+
+
+
