@@ -1,3 +1,4 @@
+#Take rep-seqs and assign taxonomy using DADA2 in R
 # This was run on interactive HPC
 # Load Packages
 library(dada2)
